@@ -1,5 +1,6 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const passport = require("passport");
 const User = require("../models/User");
 
 const router = express.Router();
@@ -7,7 +8,7 @@ const router = express.Router();
 // Helper function to create JWT token
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "7d", // Token valid for 7 days
+    expiresIn: "7d",
   });
 };
 
@@ -16,17 +17,14 @@ router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: "Email already registered" });
     }
 
-    // Create new user
     const user = new User({ name, email, password });
     await user.save();
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -44,19 +42,21 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ error: "Invalid email or password" });
     }
 
-    // Check password
+    // Block login if user registered with Google
+    if (!user.password) {
+      return res.status(400).json({ error: "Please sign in with Google" });
+    }
+
     const isPasswordCorrect = await user.comparePassword(password);
     if (!isPasswordCorrect) {
       return res.status(400).json({ error: "Invalid email or password" });
     }
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.json({
@@ -68,5 +68,33 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// GOOGLE OAuth — step 1: redirect to Google
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// GOOGLE OAuth — step 2: Google redirects back here
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: `${process.env.CLIENT_URL}/login?error=google_failed`,
+  }),
+  (req, res) => {
+    const token = generateToken(req.user._id);
+    const user = JSON.stringify({
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+    });
+
+    // Redirect to frontend with token and user in query params
+    res.redirect(
+      `${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(user)}`
+    );
+  }
+);
 
 module.exports = router;

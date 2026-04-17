@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const session = require("express-session");
+const passport = require("./config/passport");
 
 const authRoutes = require("./routes/auth");
 const notesRoutes = require("./routes/notes");
@@ -9,8 +11,16 @@ const notesRoutes = require("./routes/notes");
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
+app.use(
+  session({
+    secret: process.env.JWT_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
 
 // MongoDB Connection
 mongoose

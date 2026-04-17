@@ -5,26 +5,31 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true, // User must have a name
+      required: true,
     },
     email: {
       type: String,
       required: true,
-      unique: true, // No two users can have the same email
+      unique: true,
       lowercase: true,
     },
     password: {
       type: String,
-      required: true,
-      minlength: 6, // Password must be at least 6 chars
+      minlength: 6,
+      default: null,
+    },
+    googleId: {
+      type: String,
+      default: null,
     },
   },
-  { timestamps: true } // Adds createdAt and updatedAt automatically
+  { timestamps: true }
 );
 
 // Hash password before saving
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
+  if (!this.password) return; // skip if no password (Google users)
 
   try {
     const salt = await bcrypt.genSalt(10);
