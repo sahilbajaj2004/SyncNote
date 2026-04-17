@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import NoteEditor from "./pages/NoteEditor";
 import Navbar from "./components/Navbar";
+import AuthCallback from "./pages/AuthCallback";
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ const App = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/dashboard"
           element={
