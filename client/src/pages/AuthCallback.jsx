@@ -11,11 +11,22 @@ const AuthCallback = () => {
     const token = params.get("token");
     const user = params.get("user");
 
+    console.log("token:", token);
+    console.log("user:", user);
+
     if (token && user) {
-      login(JSON.parse(decodeURIComponent(user)), token);
-      navigate("/dashboard");
+      try {
+        const parsedUser = JSON.parse(decodeURIComponent(user));
+        console.log("parsedUser:", parsedUser);
+        login(parsedUser, token);
+        navigate("/dashboard", { replace: true });
+      } catch (err) {
+        console.log("parse error:", err);
+        navigate("/login");
+      }
     } else {
-      navigate("/login?error=google_failed");
+      console.log("no token or user found in URL");
+      navigate("/login");
     }
   }, []);
 

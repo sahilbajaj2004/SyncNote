@@ -78,22 +78,23 @@ router.get(
 // GOOGLE OAuth — step 2: Google redirects back here
 router.get(
   "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${process.env.CLIENT_URL}/login?error=google_failed`,
-  }),
-  (req, res) => {
-    const token = generateToken(req.user._id);
-    const user = JSON.stringify({
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-    });
+  (req, res, next) => {
+    passport.authenticate("google", { session: false }, (err, user) => {
+      if (err || !user) {
+        return res.redirect(`http://localhost:5173/login?error=google_failed`);
+      }
 
-    // Redirect to frontend with token and user in query params
-    res.redirect(
-      `${process.env.CLIENT_URL}/auth/callback?token=${token}&user=${encodeURIComponent(user)}`
-    );
+      const token = generateToken(user._id);
+      const userData = JSON.stringify({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      });
+
+      res.redirect(
+        `http://localhost:5173/auth/callback?token=${token}&user=${encodeURIComponent(userData)}`
+      );
+    })(req, res, next);
   }
 );
 
