@@ -4,14 +4,25 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const session = require("express-session");
 const passport = require("./config/passport");
+const { createServer } = require("http");
+const { Server } = require("socket.io");
 
 const authRoutes = require("./routes/auth");
 const notesRoutes = require("./routes/notes");
 
 const app = express();
+const httpServer = createServer(app);
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 app.use(
   session({
@@ -36,7 +47,43 @@ app.get("/", (req, res) => {
   res.json({ message: "Server is running" });
 });
 
+// Socket.io
+const noteRooms = {}; // { noteId: { socketId: { userId, name } } }
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // User joins a note room
+  socket.on("join-note", ({ noteId, userId, userName }) => {
+    socket.join(noteId);
+
+    if (!noteRooms[noteId]) noteRooms[noteId] = {};
+    noteRooms[noteId][socket.id] = { userId, userName };
+
+    // Tell everyone in the room who's here
+    io.to(noteId).emit("room-users", Object.values(noteRooms[noteId]));
+
+    console.log(`${userName} joined note ${noteId}`);
+  });
+
+  // Receive a Yjs update and broadcast to others in the room
+  socket.on("yjs-update", ({ noteId, update }) => {
+    socket.to(noteId).emit("yjs-update", { update });
+  });
+
+  // User leaves
+  socket.on("disconnect", () => {
+    for (const noteId in noteRooms) {
+      if (noteRooms[noteId][socket.id]) {
+        delete noteRooms[noteId][socket.id];
+        io.to(noteId).emit("room-users", Object.values(noteRooms[noteId]));
+      }
+    }
+    console.log("User disconnected:", socket.id);
+  });
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
