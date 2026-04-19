@@ -54,15 +54,11 @@ io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   // User joins a note room
-  socket.on("join-note", ({ noteId, userId, userName }) => {
+  socket.on("join-note", ({ noteId, userId, userName, userColor }) => {
     socket.join(noteId);
-
     if (!noteRooms[noteId]) noteRooms[noteId] = {};
-    noteRooms[noteId][socket.id] = { userId, userName };
-
-    // Tell everyone in the room who's here
+    noteRooms[noteId][socket.id] = { userId, userName, userColor };
     io.to(noteId).emit("room-users", Object.values(noteRooms[noteId]));
-
     console.log(`${userName} joined note ${noteId}`);
   });
 

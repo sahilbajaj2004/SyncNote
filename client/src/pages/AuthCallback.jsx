@@ -19,7 +19,7 @@ const AuthCallback = () => {
         const parsedUser = JSON.parse(decodeURIComponent(user));
         console.log("parsedUser:", parsedUser);
         login(parsedUser, token);
-        navigate("/dashboard", { replace: true });
+        navigate("/setup-username", { replace: true });
       } catch (err) {
         console.log("parse error:", err);
         navigate("/login");

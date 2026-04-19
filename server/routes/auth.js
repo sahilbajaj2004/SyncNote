@@ -98,4 +98,46 @@ router.get(
   }
 );
 
+// SET USERNAME
+router.post("/setup-username", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { username } = req.body;
+
+    if (!username) return res.status(400).json({ error: "Username is required" });
+    if (username.length < 3) return res.status(400).json({ error: "Username must be at least 3 characters" });
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return res.status(400).json({ error: "Username can only contain letters, numbers, and underscores" });
+    }
+
+    const existing = await User.findOne({ username: username.toLowerCase() });
+    if (existing) return res.status(400).json({ error: "Username already taken" });
+
+    const user = await User.findByIdAndUpdate(
+      decoded.userId,
+      { username: username.toLowerCase() },
+      { new: true }
+    );
+
+    res.json({
+      message: "Username set successfully",
+      user: { id: user._id, name: user.name, email: user.email, username: user.username },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// CHECK USERNAME AVAILABILITY
+router.get("/check-username/:username", async (req, res) => {
+  try {
+    const existing = await User.findOne({ username: req.params.username.toLowerCase() });
+    res.json({ available: !existing });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;

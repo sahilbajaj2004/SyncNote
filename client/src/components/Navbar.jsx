@@ -7,14 +7,14 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/register");
   };
 
   return (
     <nav className="bg-gray-900 border-b border-gray-800 px-6 py-4">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         <Link
-          to="/dashboard"
+          to={user ? "/dashboard" : "/register"}
           className="text-white font-bold text-xl tracking-tight"
         >
           Sync<span className="text-indigo-400">Note</span>
@@ -22,9 +22,12 @@ const Navbar = () => {
 
         {user ? (
           <div className="flex items-center gap-4">
-            <span className="text-gray-400 text-sm hidden sm:block">
-              {user.name}
-            </span>
+            <div className="text-right hidden sm:block">
+              <p className="text-white text-sm font-medium">{user.name}</p>
+              {user.username && (
+                <p className="text-indigo-400 text-xs">@{user.username}</p>
+              )}
+            </div>
             <button
               onClick={handleLogout}
               className="text-sm bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition"

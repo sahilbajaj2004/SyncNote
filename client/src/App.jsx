@@ -6,10 +6,16 @@ import Dashboard from "./pages/Dashboard";
 import NoteEditor from "./pages/NoteEditor";
 import Navbar from "./components/Navbar";
 import AuthCallback from "./pages/AuthCallback";
+import SetupUsername from "./pages/SetupUsername";
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" />;
+  return user ? children : <Navigate to="/register" />;
+};
+
+const PublicRoute = ({ children }) => {
+  const { user } = useAuth();
+  return !user ? children : <Navigate to="/dashboard" />;
 };
 
 const App = () => {
@@ -17,9 +23,10 @@ const App = () => {
     <BrowserRouter>
       <Navbar />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/setup-username" element={<SetupUsername />} />
         <Route
           path="/dashboard"
           element={
@@ -36,7 +43,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
+        <Route path="*" element={<Navigate to="/register" />} />
       </Routes>
     </BrowserRouter>
   );

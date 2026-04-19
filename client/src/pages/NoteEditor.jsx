@@ -1,13 +1,23 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import * as Y from "yjs";
-import { ySyncPlugin, yCursorPlugin, yUndoPlugin } from "y-prosemirror";
+import { ySyncPlugin, yUndoPlugin, undo, redo } from "y-prosemirror";
 import { io } from "socket.io-client";
 import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
+const USER_COLORS = [
+  "#958DF1", "#F98181", "#FBBC88", "#FAF594",
+  "#70CFF8", "#94FADB", "#B9F18D", "#C3E2C2",
+];
+
+const getRandomColor = () =>
+  USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)];
+
+const ydoc = new Y.Doc();
+const ytext = ydoc.getXmlFragment("prosemirror");
 const socket = io("http://localhost:5000");
 
 const NoteEditor = () => {
@@ -23,21 +33,22 @@ const NoteEditor = () => {
   const [collaboratorEmail, setCollaboratorEmail] = useState("");
   const [addingCollab, setAddingCollab] = useState(false);
   const [collabMessage, setCollabMessage] = useState("");
-
-  // Create Yjs document
-  const ydoc = new Y.Doc();
-  const ytext = ydoc.getText("content");
+  const userColor = useRef(getRandomColor());
+  const initialized = useRef(false);
 
   const editor = useEditor({
-    extensions: [StarterKit.configure({ history: false })],
+    extensions: [
+      StarterKit.configure({
+        history: false,
+      }),
+    ],
     editorProps: {
       attributes: {
         class:
           "prose prose-invert max-w-none min-h-[400px] focus:outline-none text-gray-300 leading-relaxed",
       },
     },
-    onUpdate: ({ editor }) => {
-      // Auto-save content to DB every 2 seconds after typing stops
+    onUpdate: () => {
       setSaving(true);
     },
   });
@@ -49,8 +60,9 @@ const NoteEditor = () => {
         const res = await axios.get(`/notes/${id}`);
         setNote(res.data);
         setTitle(res.data.title);
-        if (editor && res.data.content) {
+        if (editor && res.data.content && !initialized.current) {
           editor.commands.setContent(res.data.content);
+          initialized.current = true;
         }
       } catch (err) {
         setError("Failed to load note or access denied");
@@ -61,7 +73,7 @@ const NoteEditor = () => {
     if (editor) fetchNote();
   }, [id, editor]);
 
-  // Join Socket.io room
+  // Socket.io
   useEffect(() => {
     if (!user || !id) return;
 
@@ -69,6 +81,7 @@ const NoteEditor = () => {
       noteId: id,
       userId: user.id,
       userName: user.name,
+      userColor: userColor.current,
     });
 
     socket.on("room-users", (roomUsers) => {
@@ -76,22 +89,19 @@ const NoteEditor = () => {
     });
 
     socket.on("yjs-update", ({ update }) => {
-      const uint8Update = new Uint8Array(update);
-      Y.applyUpdate(ydoc, uint8Update);
-      if (editor) {
-        editor.commands.setContent(ytext.toString());
-      }
+      Y.applyUpdate(ydoc, new Uint8Array(update));
     });
 
     return () => {
       socket.off("room-users");
       socket.off("yjs-update");
     };
-  }, [user, id, editor]);
+  }, [user, id]);
 
   // Broadcast Yjs updates
   useEffect(() => {
-    const handler = (update) => {
+    const handler = (update, origin) => {
+      if (origin === "remote") return;
       socket.emit("yjs-update", {
         noteId: id,
         update: Array.from(update),
@@ -101,9 +111,9 @@ const NoteEditor = () => {
     return () => ydoc.off("update", handler);
   }, [id]);
 
-  // Auto-save title and content
+  // Auto-save
   useEffect(() => {
-    if (!note) return;
+    if (!note || !saving) return;
     const timeout = setTimeout(async () => {
       try {
         await axios.put(`/notes/${id}`, {
@@ -176,13 +186,13 @@ const NoteEditor = () => {
             ← Back
           </button>
           <div className="flex items-center gap-3">
-            {/* Active users */}
             {users.length > 0 && (
               <div className="flex items-center gap-1">
                 {users.map((u, i) => (
                   <span
                     key={i}
-                    className="bg-indigo-600 text-white text-xs px-2 py-1 rounded-full"
+                    style={{ backgroundColor: u.userColor || "#958DF1" }}
+                    className="text-white text-xs px-2 py-1 rounded-full font-medium"
                   >
                     {u.userName?.split(" ")[0]}
                   </span>
@@ -207,7 +217,6 @@ const NoteEditor = () => {
           className="w-full bg-transparent text-white text-3xl font-bold placeholder-gray-700 outline-none border-none mb-4"
         />
 
-        {/* Divider */}
         <div className="border-t border-gray-800 mb-6" />
 
         {/* Toolbar */}
@@ -237,13 +246,14 @@ const NoteEditor = () => {
           </div>
         )}
 
-        {/* TipTap Editor */}
-        <EditorContent editor={editor} />
+        {/* Editor */}
+        <div className="min-h-[400px]">
+          <EditorContent editor={editor} />
+        </div>
 
-        {/* Collaborators Section */}
+        {/* Collaborators */}
         <div className="mt-10 border-t border-gray-800 pt-8">
           <h3 className="text-white font-semibold mb-4">Collaborators</h3>
-
           {note?.collaborators?.length > 0 ? (
             <div className="flex flex-wrap gap-2 mb-4">
               {note.collaborators.map((c) => (
@@ -280,7 +290,6 @@ const NoteEditor = () => {
             <p className="text-sm mt-2 text-gray-400">{collabMessage}</p>
           )}
         </div>
-
       </div>
     </div>
   );
