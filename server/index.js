@@ -22,7 +22,13 @@ const io = new Server(httpServer, {
 });
 
 // Middleware
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+app.options("*", cors());
 app.use(express.json());
 app.use(
   session({
@@ -48,12 +54,11 @@ app.get("/", (req, res) => {
 });
 
 // Socket.io
-const noteRooms = {}; // { noteId: { socketId: { userId, name } } }
+const noteRooms = {};
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // User joins a note room
   socket.on("join-note", ({ noteId, userId, userName, userColor }) => {
     socket.join(noteId);
     if (!noteRooms[noteId]) noteRooms[noteId] = {};
@@ -62,12 +67,10 @@ io.on("connection", (socket) => {
     console.log(`${userName} joined note ${noteId}`);
   });
 
-  // Receive a Yjs update and broadcast to others in the room
   socket.on("yjs-update", ({ noteId, update }) => {
     socket.to(noteId).emit("yjs-update", { update });
   });
 
-  // User leaves
   socket.on("disconnect", () => {
     for (const noteId in noteRooms) {
       if (noteRooms[noteId][socket.id]) {

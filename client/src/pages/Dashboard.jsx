@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 
 const Dashboard = () => {
   const [notes, setNotes] = useState([]);
@@ -8,6 +9,15 @@ const Dashboard = () => {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user?.username) {
+      navigate("/setup-username");
+      return;
+    }
+    fetchNotes();
+  }, []);
 
   const fetchNotes = async () => {
     try {
@@ -19,10 +29,6 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchNotes();
-  }, []);
 
   const createNote = async () => {
     setCreating(true);

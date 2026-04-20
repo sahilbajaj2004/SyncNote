@@ -12,12 +12,12 @@ const SetupUsername = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // If user already has username, skip this page
   useEffect(() => {
-    if (user?.username) navigate("/dashboard");
-  }, [user]);
+    if (user?.username) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user?.username]);
 
-  // Check availability as user types
   useEffect(() => {
     if (username.length < 3) {
       setAvailable(null);
@@ -41,16 +41,17 @@ const SetupUsername = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!available) return;
     setError("");
     setLoading(true);
 
     try {
       const res = await axios.post("/auth/setup-username", { username });
       updateUser({ username: res.data.user.username });
-      navigate("/dashboard");
+      // Small delay to let state update before navigating
+      setTimeout(() => navigate("/dashboard", { replace: true }), 100);
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong");
-    } finally {
       setLoading(false);
     }
   };
@@ -79,12 +80,14 @@ const SetupUsername = () => {
               <input
                 type="text"
                 value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""));
-                }}
+                onChange={(e) =>
+                  setUsername(
+                    e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")
+                  )
+                }
                 required
                 placeholder="sahilbajaj"
-                className="w-full bg-gray-800 text-white pl-8 pr-4 py-2.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 placeholder-gray-600"
+                className="w-full bg-gray-800 text-white pl-8 pr-24 py-2.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 placeholder-gray-600"
               />
               {username.length >= 3 && (
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs">

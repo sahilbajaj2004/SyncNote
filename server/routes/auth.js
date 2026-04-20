@@ -5,7 +5,6 @@ const User = require("../models/User");
 
 const router = express.Router();
 
-// Helper function to create JWT token
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "7d",
@@ -30,7 +29,12 @@ router.post("/register", async (req, res) => {
     res.status(201).json({
       message: "User registered successfully",
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username || null,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -47,7 +51,6 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid email or password" });
     }
 
-    // Block login if user registered with Google
     if (!user.password) {
       return res.status(400).json({ error: "Please sign in with Google" });
     }
@@ -62,41 +65,44 @@ router.post("/login", async (req, res) => {
     res.json({
       message: "Logged in successfully",
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username || null,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GOOGLE OAuth — step 1: redirect to Google
+// GOOGLE OAuth — step 1
 router.get(
   "/google",
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
-// GOOGLE OAuth — step 2: Google redirects back here
-router.get(
-  "/google/callback",
-  (req, res, next) => {
-    passport.authenticate("google", { session: false }, (err, user) => {
-      if (err || !user) {
-        return res.redirect(`http://localhost:5173/login?error=google_failed`);
-      }
+// GOOGLE OAuth — step 2
+router.get("/google/callback", (req, res, next) => {
+  passport.authenticate("google", { session: false }, (err, user) => {
+    if (err || !user) {
+      return res.redirect(`http://localhost:5173/login?error=google_failed`);
+    }
 
-      const token = generateToken(user._id);
-      const userData = JSON.stringify({
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      });
+    const token = generateToken(user._id);
+    const userData = JSON.stringify({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      username: user.username || null,
+    });
 
-      res.redirect(
-        `http://localhost:5173/auth/callback?token=${token}&user=${encodeURIComponent(userData)}`
-      );
-    })(req, res, next);
-  }
-);
+    res.redirect(
+      `http://localhost:5173/auth/callback?token=${token}&user=${encodeURIComponent(userData)}`
+    );
+  })(req, res, next);
+});
 
 // SET USERNAME
 router.post("/setup-username", async (req, res) => {
@@ -124,7 +130,12 @@ router.post("/setup-username", async (req, res) => {
 
     res.json({
       message: "Username set successfully",
-      user: { id: user._id, name: user.name, email: user.email, username: user.username },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -134,10 +145,13 @@ router.post("/setup-username", async (req, res) => {
 // CHECK USERNAME AVAILABILITY
 router.get("/check-username/:username", async (req, res) => {
   try {
-    const existing = await User.findOne({ username: req.params.username.toLowerCase() });
+    const existing = await User.findOne({
+      username: req.params.username.toLowerCase(),
+    });
     res.json({ available: !existing });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 module.exports = router;
