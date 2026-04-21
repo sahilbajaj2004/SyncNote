@@ -9,8 +9,8 @@ import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
 const USER_COLORS = [
-  "#958DF1", "#F98181", "#FBBC88", "#FAF594",
-  "#70CFF8", "#94FADB", "#B9F18D", "#C3E2C2",
+  "#f59e0b", "#fbbf24", "#d97706", "#fde68a",
+  "#b45309", "#fcd34d", "#fffbeb", "#fef3c7",
 ];
 
 const getRandomColor = () =>
@@ -45,7 +45,7 @@ const NoteEditor = () => {
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert max-w-none min-h-[400px] focus:outline-none text-gray-300 leading-relaxed",
+          "prose prose-invert max-w-none min-h-[500px] focus:outline-none text-gray-300 leading-relaxed px-2",
       },
     },
     onUpdate: () => {
@@ -151,22 +151,31 @@ const NoteEditor = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-500">Loading note...</p>
+      <div className="min-h-[calc(100vh-73px)] relative flex items-center justify-center">
+        <div className="mesh-bg opacity-30"></div>
+        <div className="flex flex-col items-center gap-5 anim-fade z-10">
+          <div className="branded-loader"></div>
+          <p className="text-gray-500 font-medium">Opening document</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">{error}</p>
+      <div className="min-h-[calc(100vh-73px)] relative flex items-center justify-center">
+        <div className="mesh-bg opacity-30"></div>
+        <div className="glass-card p-10 text-center max-w-md z-10 anim-in">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto mb-6">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </div>
+          <p className="text-white font-medium mb-2">Access Denied</p>
+          <p className="text-gray-400 text-sm mb-8">{error}</p>
           <button
             onClick={() => navigate("/dashboard")}
-            className="text-indigo-400 hover:underline text-sm"
+            className="btn-glass px-6 py-2.5 w-full"
           >
-            Back to dashboard
+            Back to Workspace
           </button>
         </div>
       </div>
@@ -174,122 +183,187 @@ const NoteEditor = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-10">
-      <div className="max-w-3xl mx-auto">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-[calc(100vh-73px)] relative px-6 py-8">
+      <div className="mesh-bg opacity-20"></div>
+      
+      <div className="max-w-4xl mx-auto relative z-10">
+        
+        {/* Header Bar */}
+        <div className="flex items-center justify-between mb-8 anim-in anim-in-1">
           <button
             onClick={() => navigate("/dashboard")}
-            className="text-gray-500 hover:text-white text-sm transition"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium group"
           >
-            ← Back
+            <span className="transform group-hover:-translate-x-1 transition-transform">←</span>
+            Back to Workspace
           </button>
-          <div className="flex items-center gap-3">
+          
+          <div className="flex items-center gap-4">
             {users.length > 0 && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center -space-x-2">
                 {users.map((u, i) => (
-                  <span
+                  <div
                     key={i}
-                    style={{ backgroundColor: u.userColor || "#958DF1" }}
-                    className="text-white text-xs px-2 py-1 rounded-full font-medium"
+                    className="w-8 h-8 rounded-full border-2 border-void flex items-center justify-center shadow-lg transform transition hover:-translate-y-1 hover:z-10 relative cursor-pointer group"
+                    style={{ backgroundColor: u.userColor || "#fbbf24" }}
                   >
-                    {u.userName?.split(" ")[0]}
-                  </span>
+                    <span className="text-void text-xs font-bold">
+                      {u.userName?.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-white text-void text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
+                      {u.userName}
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
-            <span className="text-gray-600 text-xs">
-              {saving ? "Saving..." : "Saved"}
-            </span>
+            <div className="h-4 w-px bg-white/10 mx-1"></div>
+            <div className="flex items-center gap-2 text-sm text-gray-400 font-medium w-24 justify-end">
+              {saving ? (
+                <>
+                  <span className="save-dot save-dot-saving"></span> Saving 
+                </>
+              ) : (
+                <>
+                  <span className="save-dot save-dot-saved"></span> Saved
+                </>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Title */}
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            setSaving(true);
-          }}
-          placeholder="Note title"
-          className="w-full bg-transparent text-white text-3xl font-bold placeholder-gray-700 outline-none border-none mb-4"
-        />
-
-        <div className="border-t border-gray-800 mb-6" />
-
-        {/* Toolbar */}
-        {editor && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {[
-              { label: "B", action: () => editor.chain().focus().toggleBold().run(), active: editor.isActive("bold") },
-              { label: "I", action: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive("italic") },
-              { label: "H1", action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(), active: editor.isActive("heading", { level: 1 }) },
-              { label: "H2", action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), active: editor.isActive("heading", { level: 2 }) },
-              { label: "• List", action: () => editor.chain().focus().toggleBulletList().run(), active: editor.isActive("bulletList") },
-              { label: "1. List", action: () => editor.chain().focus().toggleOrderedList().run(), active: editor.isActive("orderedList") },
-              { label: "< >", action: () => editor.chain().focus().toggleCodeBlock().run(), active: editor.isActive("codeBlock") },
-            ].map((btn) => (
-              <button
-                key={btn.label}
-                onClick={btn.action}
-                className={`text-xs px-3 py-1.5 rounded-lg transition font-mono ${
-                  btn.active
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-800 text-gray-400 hover:text-white"
-                }`}
-              >
-                {btn.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Editor */}
-        <div className="min-h-[400px]">
-          <EditorContent editor={editor} />
-        </div>
-
-        {/* Collaborators */}
-        <div className="mt-10 border-t border-gray-800 pt-8">
-          <h3 className="text-white font-semibold mb-4">Collaborators</h3>
-          {note?.collaborators?.length > 0 ? (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {note.collaborators.map((c) => (
-                <span
-                  key={c._id}
-                  className="bg-gray-800 text-gray-300 text-xs px-3 py-1.5 rounded-full"
-                >
-                  {c.name} — {c.email}
-                </span>
+        {/* Editor Wrapper */}
+        <div className="glass-card shadow-2xl overflow-hidden anim-in anim-in-2">
+          
+          {/* Toolbar */}
+          {editor && (
+            <div className="bg-white/5 border-b border-white/5 p-4 flex flex-wrap gap-2 items-center sticky top-0 z-20 backdrop-blur-md">
+              {[
+                { icon: <b className="font-serif">B</b>, action: () => editor.chain().focus().toggleBold().run(), active: editor.isActive("bold"), title: "Bold" },
+                { icon: <i className="font-serif">I</i>, action: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive("italic"), title: "Italic" },
+                { separator: true },
+                { icon: "H1", action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(), active: editor.isActive("heading", { level: 1 }), title: "Heading 1" },
+                { icon: "H2", action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), active: editor.isActive("heading", { level: 2 }), title: "Heading 2" },
+                { separator: true },
+                { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>, action: () => editor.chain().focus().toggleBulletList().run(), active: editor.isActive("bulletList"), title: "Bullet List" },
+                { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><path d="M4 6h1v4"></path><path d="M4 10h2"></path><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path></svg>, action: () => editor.chain().focus().toggleOrderedList().run(), active: editor.isActive("orderedList"), title: "Numbered List" },
+                { separator: true },
+                { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>, action: () => editor.chain().focus().toggleCodeBlock().run(), active: editor.isActive("codeBlock"), title: "Code Block" },
+              ].map((btn, idx) => (
+                btn.separator ? (
+                  <div key={`sep-${idx}`} className="h-5 w-px bg-white/10 mx-1"></div>
+                ) : (
+                  <button
+                    key={btn.title}
+                    onClick={btn.action}
+                    title={btn.title}
+                    className={`h-8 min-w-[32px] px-2 rounded-md flex items-center justify-center text-xs font-bold transition-all ${
+                      btn.active
+                        ? "bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-glow-gold"
+                        : "text-gray-400 hover:bg-white/10 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    {btn.icon}
+                  </button>
+                )
               ))}
             </div>
-          ) : (
-            <p className="text-gray-600 text-sm mb-4">No collaborators yet.</p>
           )}
 
-          <div className="flex gap-2">
+          {/* Editor Area */}
+          <div className="p-8 sm:p-12 pl-10 sm:pl-14 relative">
+            {/* Visual Accent Line */}
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-gold-500/40 via-gold-600/10 to-transparent"></div>
+            
             <input
-              type="email"
-              value={collaboratorEmail}
-              onChange={(e) => setCollaboratorEmail(e.target.value)}
-              placeholder="Enter email to invite"
-              className="flex-1 bg-gray-900 border border-gray-700 text-white text-sm px-4 py-2.5 rounded-lg focus:outline-none focus:border-indigo-500 placeholder-gray-600"
+              type="text"
+              value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setSaving(true);
+              }}
+              placeholder="Document Title"
+              className="w-full bg-transparent text-white font-heading text-4xl sm:text-5xl font-bold tracking-tight placeholder-gray-700 outline-none border-none mb-8 focus:ring-0"
             />
-            <button
-              onClick={addCollaborator}
-              disabled={addingCollab}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2.5 rounded-lg transition disabled:opacity-50"
-            >
-              {addingCollab ? "Adding..." : "Invite"}
-            </button>
-          </div>
 
-          {collabMessage && (
-            <p className="text-sm mt-2 text-gray-400">{collabMessage}</p>
-          )}
+            <EditorContent editor={editor} />
+          </div>
         </div>
+
+        {/* Collaborators Section */}
+        <div className="mt-12 anim-in anim-in-3">
+          <div className="flex items-center gap-3 mb-6">
+            <h3 className="text-white font-heading font-bold text-lg">Collaborators</h3>
+            <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            {/* Current Collaborators */}
+            <div className="md:col-span-3">
+              {note?.collaborators?.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {note.collaborators.map((c) => (
+                    <div
+                      key={c._id}
+                      className="flex items-center gap-4 bg-white/5 border border-white/5 p-3 rounded-xl"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border border-white/10 shadow-inner">
+                         <span className="text-gray-300 font-bold">{c.name.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-medium text-sm">{c.name}</p>
+                        <p className="text-gray-500 text-xs">{c.email}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white/5 border border-white/5 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-500 mb-3">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  </div>
+                  <p className="text-gray-400 text-sm">No collaborators yet.</p>
+                  <p className="text-gray-600 text-xs mt-1">Invite your team to edit together in real-time.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Invite Form */}
+            <div className="md:col-span-2">
+              <div className="glass-card p-5">
+                <p className="text-white font-medium text-sm mb-4">Invite someone</p>
+                <div className="flex flex-col gap-3">
+                  <input
+                    type="email"
+                    value={collaboratorEmail}
+                    onChange={(e) => setCollaboratorEmail(e.target.value)}
+                    placeholder="Email address"
+                    className="input-gold w-full px-4 py-2.5 text-sm"
+                  />
+                  <button
+                    onClick={addCollaborator}
+                    disabled={addingCollab || !collaboratorEmail}
+                    className="btn-gold w-full py-2.5 text-sm flex items-center justify-center gap-2"
+                  >
+                    {addingCollab ? (
+                      <div className="w-4 h-4 border-2 border-void/20 border-t-void rounded-full animate-spin"></div>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    )}
+                    Send Invite
+                  </button>
+                </div>
+
+                {collabMessage && (
+                  <div className={`mt-4 px-3 py-2 rounded-lg text-xs font-medium border ${collabMessage.includes("success") ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400"}`}>
+                    {collabMessage}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

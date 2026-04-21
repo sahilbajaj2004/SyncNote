@@ -48,7 +48,6 @@ const SetupUsername = () => {
     try {
       const res = await axios.post("/auth/setup-username", { username });
       updateUser({ username: res.data.user.username });
-      // Small delay to let state update before navigating
       setTimeout(() => navigate("/dashboard", { replace: true }), 100);
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong");
@@ -57,24 +56,31 @@ const SetupUsername = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-      <div className="bg-gray-900 p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-white mb-2">Pick a username</h2>
-        <p className="text-gray-400 text-sm mb-6">
-          This is how others will find and invite you to notes.
-        </p>
+    <div className="min-h-[calc(100vh-73px)] relative flex items-center justify-center px-4 py-12">
+      <div className="mesh-bg"></div>
+      <div className="grain-overlay"></div>
+
+      <div className="glass-card w-full max-w-md p-8 sm:p-10 relative z-10">
+        <div className="text-center mb-8 anim-in anim-in-1">
+          <h2 className="text-3xl font-heading font-bold text-white mb-2">
+            Pick a username
+          </h2>
+          <p className="text-gray-400 text-sm">
+            This is how others will find and invite you to notes.
+          </p>
+        </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg mb-4">
+          <div className="error-banner px-4 py-3 mb-6 anim-in anim-in-2">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 anim-in anim-in-3">
           <div>
-            <label className="text-sm text-gray-400 block mb-1">Username</label>
+            <label className="text-sm font-medium text-gray-300 block mb-1.5 ml-1">Username</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                 @
               </span>
               <input
@@ -87,31 +93,40 @@ const SetupUsername = () => {
                 }
                 required
                 placeholder="sahilbajaj"
-                className="w-full bg-gray-800 text-white pl-8 pr-24 py-2.5 rounded-lg border border-gray-700 focus:outline-none focus:border-indigo-500 placeholder-gray-600"
+                className="input-gold w-full pl-9 pr-24 py-3"
               />
               {username.length >= 3 && (
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center bg-void/50 backdrop-blur-md px-2.5 py-1 rounded-md border border-white/5">
                   {checking ? (
-                    <span className="text-gray-500">checking...</span>
+                    <span className="text-gold-400 text-[11px] font-medium tracking-wide uppercase flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse"></span>
+                      Checking
+                    </span>
                   ) : available === true ? (
-                    <span className="text-green-400">available</span>
+                    <span className="text-[#4ade80] text-[11px] font-medium tracking-wide uppercase flex items-center gap-1.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      Available
+                    </span>
                   ) : available === false ? (
-                    <span className="text-red-400">taken</span>
+                    <span className="text-[#f87171] text-[11px] font-medium tracking-wide uppercase flex items-center gap-1.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      Taken
+                    </span>
                   ) : null}
-                </span>
+                </div>
               )}
             </div>
-            <p className="text-gray-600 text-xs mt-1">
-              Letters, numbers, underscores only. Min 3 characters.
+            <p className="text-gray-500 text-xs mt-2 ml-1">
+              Letters, numbers, underscores only. Min 3 chars.
             </p>
           </div>
 
           <button
             type="submit"
             disabled={loading || !available}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-gold w-full py-3 text-base"
           >
-            {loading ? "Setting up..." : "Continue"}
+            {loading ? "Completing setup..." : "Continue to Dashboard"}
           </button>
         </form>
       </div>

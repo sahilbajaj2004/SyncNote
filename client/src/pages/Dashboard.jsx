@@ -63,77 +63,110 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-500">Loading notes...</p>
+      <div className="min-h-[calc(100vh-73px)] relative flex items-center justify-center">
+        <div className="mesh-bg opacity-30"></div>
+        <div className="grain-overlay"></div>
+        <div className="flex flex-col items-center gap-5 anim-fade z-10">
+          <div className="branded-loader"></div>
+          <p className="text-gray-500 font-medium">Loading your workspace</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 px-4 py-10">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-[calc(100vh-73px)] relative px-6 py-12">
+      <div className="mesh-bg opacity-40"></div>
+      <div className="grain-overlay"></div>
+
+      <div className="max-w-5xl mx-auto relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 anim-in anim-in-1">
           <div>
-            <h1 className="text-2xl font-bold text-white">My Notes</h1>
-            <p className="text-gray-500 text-sm mt-1">
-              {notes.length} {notes.length === 1 ? "note" : "notes"}
-            </p>
+            <h1 className="text-4xl font-heading font-bold text-white tracking-tight">
+              Workspace
+            </h1>
+            <div className="flex items-center gap-3 mt-3">
+              <span className="flex h-2 w-2 rounded-full bg-gold-400"></span>
+              <p className="text-gray-400 text-sm font-medium">
+                {notes.length} {notes.length === 1 ? "document" : "documents"}
+              </p>
+            </div>
           </div>
           <button
             onClick={createNote}
             disabled={creating}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-gold px-6 py-2.5 flex items-center gap-2"
           >
-            {creating ? "Creating..." : "+ New Note"}
+            {creating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-void/20 border-t-void rounded-full animate-spin"></div>
+                Creating...
+              </>
+            ) : (
+              <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New Note
+              </>
+            )}
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg mb-6">
+          <div className="error-banner px-4 py-3 mb-8 anim-in anim-in-2">
             {error}
           </div>
         )}
 
         {notes.length === 0 ? (
-          <div className="text-center py-24">
-            <p className="text-gray-600 text-lg">No notes yet.</p>
-            <p className="text-gray-700 text-sm mt-2">
-              Hit "+ New Note" to get started.
+          <div className="glass-card flex flex-col items-center justify-center py-20 px-4 text-center anim-in anim-in-2 mt-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-500/20 to-gold-600/5 border border-gold-500/20 flex items-center justify-center mb-6">
+              <svg className="text-gold-400" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
+            </div>
+            <h3 className="text-xl font-heading font-bold text-white mb-2">No notes yet</h3>
+            <p className="text-gray-400 max-w-sm mb-8">
+              Create your first note to start collaborating and capturing ideas.
             </p>
+            <button onClick={createNote} className="btn-glass px-5 py-2.5 flex items-center gap-2 text-sm text-gold-400 hover:text-gold-300">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+               Create your first note
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {notes.map((note) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {notes.map((note, idx) => (
               <div
                 key={note._id}
                 onClick={() => navigate(`/notes/${note._id}`)}
-                className="bg-gray-900 border border-gray-800 hover:border-indigo-500/50 rounded-xl p-5 cursor-pointer transition group"
+                className={`glass-card-interactive p-6 group anim-in`}
+                style={{ animationDelay: `${(idx + 2) * 80}ms` }}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-white font-semibold text-base truncate">
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <h3 className="font-heading font-bold text-white text-lg leading-tight truncate">
                     {note.title || "Untitled Note"}
                   </h3>
                   <button
                     onClick={(e) => deleteNote(e, note._id)}
-                    className="text-gray-600 hover:text-red-400 text-xs transition shrink-0 opacity-0 group-hover:opacity-100"
+                    className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all p-1.5 -mr-1.5 rounded-md hover:bg-red-500/10 focus:opacity-100"
+                    title="Delete Note"
                   >
-                    Delete
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                   </button>
                 </div>
 
-                <p className="text-gray-500 text-sm mt-2 line-clamp-2">
-                  {note.content || "No content yet..."}
+                <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed mb-6">
+                  {note.content?.replace(/<[^>]*>?/gm, '') || "No content yet. Click to start writing..."}
                 </p>
 
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-gray-600 text-xs">
+                <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between">
+                  <span className="text-gray-500 text-[11px] font-medium uppercase tracking-wider">
                     {formatDate(note.updatedAt)}
                   </span>
+                  
                   {note.collaborators?.length > 0 && (
-                    <span className="text-indigo-400 text-xs">
-                      {note.collaborators.length} collaborator
-                      {note.collaborators.length > 1 ? "s" : ""}
-                    </span>
+                    <div className="flex items-center gap-1.5 bg-gold-400/10 text-gold-400 border border-gold-400/20 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                      {note.collaborators.length}
+                    </div>
                   )}
                 </div>
               </div>

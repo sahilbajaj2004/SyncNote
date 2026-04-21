@@ -11,28 +11,28 @@ const AuthCallback = () => {
     const token = params.get("token");
     const user = params.get("user");
 
-    console.log("token:", token);
-    console.log("user:", user);
-
     if (token && user) {
       try {
         const parsedUser = JSON.parse(decodeURIComponent(user));
-        console.log("parsedUser:", parsedUser);
         login(parsedUser, token);
         navigate("/setup-username", { replace: true });
       } catch (err) {
-        console.log("parse error:", err);
         navigate("/login");
       }
     } else {
-      console.log("no token or user found in URL");
       navigate("/login");
     }
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-      <p className="text-gray-500">Signing you in...</p>
+    <div className="min-h-[calc(100vh-73px)] relative flex items-center justify-center">
+      <div className="mesh-bg opacity-50"></div>
+      <div className="grain-overlay"></div>
+      
+      <div className="flex flex-col items-center gap-6 anim-fade z-10">
+        <div className="branded-loader"></div>
+        <p className="text-gold-400 font-medium tracking-wide">Authenticating</p>
+      </div>
     </div>
   );
 };

@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import NoteEditor from "./pages/NoteEditor";
 import Navbar from "./components/Navbar";
+import Landing from "./pages/Landing";
 import AuthCallback from "./pages/AuthCallback";
 import SetupUsername from "./pages/SetupUsername";
 
@@ -23,6 +24,7 @@ const App = () => {
     <BrowserRouter>
       <Navbar />
       <Routes>
+        <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/auth/callback" element={<AuthCallback />} />

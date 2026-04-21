@@ -11,41 +11,53 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800 px-6 py-4">
+    <nav className="glass-nav sticky top-0 z-50 px-6 py-4 anim-fade">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         <Link
-          to={user ? "/dashboard" : "/register"}
-          className="text-white font-bold text-xl tracking-tight"
+          to="/"
+          className="font-heading font-bold text-xl tracking-tight anim-in anim-in-1"
         >
-          Sync<span className="text-indigo-400">Note</span>
+          <span className="text-white">Sync</span>
+          <span className="text-gold-gradient">Note</span>
         </Link>
 
         {user ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5 anim-in anim-in-2">
             <div className="text-right hidden sm:block">
-              <p className="text-white text-sm font-medium">{user.name}</p>
+              <p className="text-white text-sm font-medium leading-tight">
+                {user.name}
+              </p>
               {user.username && (
-                <p className="text-indigo-400 text-xs">@{user.username}</p>
+                <p className="text-gold-400 text-xs mt-0.5 opacity-80 font-medium">
+                  @{user.username}
+                </p>
               )}
             </div>
+            
+            <div className="h-9 w-9 rounded-full bg-deep border-2 border-gold-400/40 flex items-center justify-center shadow-glow-gold">
+               <span className="text-gold-400 font-bold text-sm">
+                 {user.name?.charAt(0).toUpperCase()}
+               </span>
+            </div>
+
             <button
               onClick={handleLogout}
-              className="text-sm bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition"
+              className="btn-glass text-sm px-4 py-2"
             >
               Logout
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4 anim-in anim-in-2">
             <Link
               to="/login"
-              className="text-sm text-gray-400 hover:text-white transition"
+              className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
             >
               Sign in
             </Link>
             <Link
               to="/register"
-              className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition"
+              className="btn-gold text-sm px-5 py-2.5"
             >
               Sign up
             </Link>
