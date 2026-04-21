@@ -23,6 +23,14 @@ const Navbar = () => {
 
         {user ? (
           <div className="flex items-center gap-5 anim-in anim-in-2">
+            
+            <button
+              onClick={handleLogout}
+              className="btn-glass text-sm px-4 py-2"
+            >
+              Logout
+            </button>
+
             <div className="text-right hidden sm:block">
               <p className="text-white text-sm font-medium leading-tight">
                 {user.name}
@@ -40,12 +48,7 @@ const Navbar = () => {
                </span>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="btn-glass text-sm px-4 py-2"
-            >
-              Logout
-            </button>
+            
           </div>
         ) : (
           <div className="flex items-center gap-4 anim-in anim-in-2">
