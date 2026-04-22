@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
 import * as Y from "yjs";
 import { ySyncPlugin, yUndoPlugin, undo, redo } from "y-prosemirror";
 import { io } from "socket.io-client";
@@ -35,12 +37,27 @@ const NoteEditor = () => {
   const [collabMessage, setCollabMessage] = useState("");
   const userColor = useRef(getRandomColor());
   const initialized = useRef(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [docSettings, setDocSettings] = useState(() => {
+    const saved = localStorage.getItem("syncnote_doc_settings");
+    return saved ? JSON.parse(saved) : {
+      fontFamily: "Inter, sans-serif",
+      fontSize: "16px",
+      lineHeight: "1.75"
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem("syncnote_doc_settings", JSON.stringify(docSettings));
+  }, [docSettings]);
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         history: false,
       }),
+      Underline,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     editorProps: {
       attributes: {
@@ -82,6 +99,7 @@ const NoteEditor = () => {
       userId: user.id,
       userName: user.name,
       userColor: userColor.current,
+      userProfilePic: user.profilePic || null,
     });
 
     socket.on("room-users", (roomUsers) => {
@@ -204,12 +222,16 @@ const NoteEditor = () => {
                 {users.map((u, i) => (
                   <div
                     key={i}
-                    className="w-8 h-8 rounded-full border-2 border-void flex items-center justify-center shadow-lg transform transition hover:-translate-y-1 hover:z-10 relative cursor-pointer group"
+                    className="w-8 h-8 rounded-full border-2 border-void flex items-center justify-center shadow-lg transform transition hover:-translate-y-1 hover:z-10 relative cursor-pointer group overflow-hidden"
                     style={{ backgroundColor: u.userColor || "#fbbf24" }}
                   >
-                    <span className="text-void text-xs font-bold">
-                      {u.userName?.charAt(0).toUpperCase()}
-                    </span>
+                    {u.userProfilePic ? (
+                      <img src={u.userProfilePic} alt={u.userName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-void text-xs font-bold">
+                        {u.userName?.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                     <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-white text-void text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
                       {u.userName}
                     </span>
@@ -241,12 +263,19 @@ const NoteEditor = () => {
               {[
                 { icon: <b className="font-serif">B</b>, action: () => editor.chain().focus().toggleBold().run(), active: editor.isActive("bold"), title: "Bold" },
                 { icon: <i className="font-serif">I</i>, action: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive("italic"), title: "Italic" },
+                { icon: <u className="font-serif">U</u>, action: () => editor.chain().focus().toggleUnderline().run(), active: editor.isActive("underline"), title: "Underline" },
+                { icon: <s className="font-serif">S</s>, action: () => editor.chain().focus().toggleStrike().run(), active: editor.isActive("strike"), title: "Strikethrough" },
                 { separator: true },
                 { icon: "H1", action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(), active: editor.isActive("heading", { level: 1 }), title: "Heading 1" },
                 { icon: "H2", action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), active: editor.isActive("heading", { level: 2 }), title: "Heading 2" },
                 { separator: true },
                 { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>, action: () => editor.chain().focus().toggleBulletList().run(), active: editor.isActive("bulletList"), title: "Bullet List" },
                 { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><path d="M4 6h1v4"></path><path d="M4 10h2"></path><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path></svg>, action: () => editor.chain().focus().toggleOrderedList().run(), active: editor.isActive("orderedList"), title: "Numbered List" },
+                { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path></svg>, action: () => editor.chain().focus().toggleBlockquote().run(), active: editor.isActive("blockquote"), title: "Blockquote" },
+                { separator: true },
+                { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="12" x2="3" y2="12"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>, action: () => editor.chain().focus().setTextAlign('left').run(), active: editor.isActive({ textAlign: 'left' }), title: "Align Left" },
+                { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="17" y1="12" x2="7" y2="12"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>, action: () => editor.chain().focus().setTextAlign('center').run(), active: editor.isActive({ textAlign: 'center' }), title: "Align Center" },
+                { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="12" x2="9" y2="12"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>, action: () => editor.chain().focus().setTextAlign('right').run(), active: editor.isActive({ textAlign: 'right' }), title: "Align Right" },
                 { separator: true },
                 { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>, action: () => editor.chain().focus().toggleCodeBlock().run(), active: editor.isActive("codeBlock"), title: "Code Block" },
               ].map((btn, idx) => (
@@ -257,21 +286,117 @@ const NoteEditor = () => {
                     key={btn.title}
                     onClick={btn.action}
                     title={btn.title}
-                    className={`h-8 min-w-[32px] px-2 rounded-md flex items-center justify-center text-xs font-bold transition-all ${
+                    className={`h-8 min-w-[32px] px-2 rounded-md flex items-center justify-center text-xs font-bold transition-all border ${
                       btn.active
-                        ? "bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-glow-gold"
-                        : "text-gray-400 hover:bg-white/10 hover:text-white border border-transparent"
+                        ? "bg-gold-500/20 text-gold-400 border-gold-500/30 shadow-glow-gold"
+                        : "text-gray-400 hover:bg-white/10 hover:text-white border-transparent"
                     }`}
                   >
                     {btn.icon}
                   </button>
                 )
               ))}
+
+              {/* Typography Settings Dropdown */}
+              <div className="relative ml-auto">
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  title="Document Typography Settings"
+                  className={`h-8 px-3 rounded-md flex items-center justify-center text-sm font-bold transition-all border ${
+                    showSettings
+                      ? "bg-gold-500/20 text-gold-400 border-gold-500/30 shadow-glow-gold"
+                      : "text-gray-400 hover:bg-white/10 hover:text-white border-transparent"
+                  }`}
+                >
+                  Aa
+                </button>
+                {showSettings && (
+                  <div className="absolute top-10 right-0 w-72 bg-[#0B0A0F] border border-white/10 shadow-2xl rounded-xl p-5 z-50 anim-in anim-in-1">
+                    
+                    {/* Font Family */}
+                    <div className="mb-5">
+                      <p className="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">Font Style</p>
+                      <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                        {['Sans', 'Serif', 'Mono'].map(f => {
+                          const val = f === 'Sans' ? "Inter, sans-serif" : f === 'Serif' ? "Merriweather, serif" : "Fira Code, monospace";
+                          const isSel = docSettings.fontFamily === val;
+                          return (
+                            <button key={f}
+                              onClick={() => setDocSettings(s => ({...s, fontFamily: val}))}
+                              className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${isSel ? 'bg-gold-500/20 text-gold-400 font-bold shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                            >
+                              <span style={{ fontFamily: val }}>{f}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Size */}
+                    <div className="mb-5">
+                      <p className="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">Text Size</p>
+                      <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                        {[{label:'S', val:'14px'}, {label:'M', val:'16px'}, {label:'L', val:'18px'}, {label:'XL', val:'20px'}].map(s => {
+                          const isSel = docSettings.fontSize === s.val;
+                          return (
+                            <button key={s.label}
+                              onClick={() => setDocSettings(st => ({...st, fontSize: s.val}))}
+                              className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${isSel ? 'bg-gold-500/20 text-gold-400 font-bold shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                            >
+                              {s.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Line Height */}
+                    <div>
+                      <p className="text-xs text-gray-400 mb-2 font-medium uppercase tracking-wider">Line Spacing</p>
+                      <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                         {[{label:'Tight', val:'1.4'}, {label:'Norm', val:'1.6'}, {label:'Relax', val:'1.8'}, {label:'Loose', val:'2'}].map(s => {
+                            const isSel = docSettings.lineHeight === s.val;
+                            return (
+                                <button key={s.label}
+                                  onClick={() => setDocSettings(st => ({...st, lineHeight: s.val}))}
+                                  className={`flex-1 text-xs py-1.5 rounded-md transition-colors ${isSel ? 'bg-gold-500/20 text-gold-400 font-bold shadow-sm' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                                >
+                                  {s.label}
+                                </button>
+                            )
+                        })}
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {/* Editor Area */}
-          <div className="p-8 sm:p-12 pl-10 sm:pl-14 relative">
+          <div className="p-8 sm:p-12 pl-10 sm:pl-14 relative editor-custom-typography">
+            <style>{`
+              .editor-custom-typography .ProseMirror, .editor-custom-typography input {
+                font-family: ${docSettings.fontFamily} !important;
+                font-size: ${docSettings.fontSize} !important;
+                line-height: ${docSettings.lineHeight} !important;
+                transition: font-size 0.2s ease, line-height 0.2s ease;
+              }
+              .editor-custom-typography .ProseMirror h1 { 
+                font-size: calc(${docSettings.fontSize} * 2) !important; 
+                line-height: calc(${docSettings.lineHeight} * 0.8) !important;
+                margin-bottom: 1em !important;
+              }
+              .editor-custom-typography .ProseMirror h2 { 
+                font-size: calc(${docSettings.fontSize} * 1.5) !important; 
+                margin-top: 1.5em !important;
+              }
+              .editor-custom-typography .ProseMirror p { 
+                margin-bottom: 1em !important;
+              }
+            `}</style>
+            
             {/* Visual Accent Line */}
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-gold-500/40 via-gold-600/10 to-transparent"></div>
             
@@ -283,8 +408,10 @@ const NoteEditor = () => {
                 setSaving(true);
               }}
               placeholder="Document Title"
-              className="w-full bg-transparent text-white font-heading text-4xl sm:text-5xl font-bold tracking-tight placeholder-gray-700 outline-none border-none mb-8 focus:ring-0"
+              className="w-full bg-transparent text-white font-black tracking-tighter placeholder-gray-700 outline-none border-none mb-6 focus:ring-0 text-6xl sm:text-7xl md:text-[80px] lg:text-[120px] transition-all"
             />
+
+            <div className="h-px w-full bg-gradient-to-r from-gold-500/30 via-white/5 to-transparent mb-8"></div>
 
             <EditorContent editor={editor} />
           </div>
@@ -307,8 +434,12 @@ const NoteEditor = () => {
                       key={c._id}
                       className="flex items-center gap-4 bg-white/5 border border-white/5 p-3 rounded-xl"
                     >
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border border-white/10 shadow-inner">
-                         <span className="text-gray-300 font-bold">{c.name.charAt(0).toUpperCase()}</span>
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center border border-white/10 shadow-inner overflow-hidden shrink-0">
+                        {c.profilePic ? (
+                          <img src={c.profilePic} alt={c.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-gray-300 font-bold">{c.name.charAt(0).toUpperCase()}</span>
+                        )}
                       </div>
                       <div>
                         <p className="text-white font-medium text-sm">{c.name}</p>

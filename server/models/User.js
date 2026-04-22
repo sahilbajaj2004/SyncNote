@@ -30,6 +30,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    profilePic: {
+      type: String,
+      default: null,
+    },
+    usernameLastChanged: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

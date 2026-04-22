@@ -34,6 +34,7 @@ router.post("/register", async (req, res) => {
         name: user.name,
         email: user.email,
         username: user.username || null,
+        profilePic: user.profilePic || null,
       },
     });
   } catch (err) {
@@ -70,6 +71,7 @@ router.post("/login", async (req, res) => {
         name: user.name,
         email: user.email,
         username: user.username || null,
+        profilePic: user.profilePic || null,
       },
     });
   } catch (err) {
@@ -96,6 +98,7 @@ router.get("/google/callback", (req, res, next) => {
       name: user.name,
       email: user.email,
       username: user.username || null,
+      profilePic: user.profilePic || null,
     });
 
     res.redirect(
@@ -135,6 +138,7 @@ router.post("/setup-username", async (req, res) => {
         name: user.name,
         email: user.email,
         username: user.username,
+        profilePic: user.profilePic || null,
       },
     });
   } catch (err) {

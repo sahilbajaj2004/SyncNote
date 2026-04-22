@@ -9,6 +9,7 @@ const { Server } = require("socket.io");
 
 const authRoutes = require("./routes/auth");
 const notesRoutes = require("./routes/notes");
+const usersRoutes = require("./routes/users");
 
 const app = express();
 const httpServer = createServer(app);
@@ -29,7 +30,10 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.options(/(.*)/, cors());
-app.use(express.json());
+
+// Increase the JSON payload limit for file uploads (Base64 strings can be large)
+app.use(express.json({ limit: '10mb' }));
+
 app.use(
   session({
     secret: process.env.JWT_SECRET,
@@ -48,6 +52,7 @@ mongoose
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", notesRoutes);
+app.use("/api/users", usersRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Server is running" });
@@ -59,10 +64,10 @@ const noteRooms = {};
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join-note", ({ noteId, userId, userName, userColor }) => {
+  socket.on("join-note", ({ noteId, userId, userName, userColor, userProfilePic }) => {
     socket.join(noteId);
     if (!noteRooms[noteId]) noteRooms[noteId] = {};
-    noteRooms[noteId][socket.id] = { userId, userName, userColor };
+    noteRooms[noteId][socket.id] = { userId, userName, userColor, userProfilePic };
     io.to(noteId).emit("room-users", Object.values(noteRooms[noteId]));
     console.log(`${userName} joined note ${noteId}`);
   });

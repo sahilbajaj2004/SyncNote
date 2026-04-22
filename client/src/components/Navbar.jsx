@@ -42,11 +42,15 @@ const Navbar = () => {
               )}
             </div>
             
-            <div className="h-9 w-9 rounded-full bg-deep border-2 border-gold-400/40 flex items-center justify-center shadow-glow-gold">
-               <span className="text-gold-400 font-bold text-sm">
-                 {user.name?.charAt(0).toUpperCase()}
-               </span>
-            </div>
+            <Link to="/settings" title="Settings" className="h-9 w-9 overflow-hidden rounded-full bg-deep border-2 border-gold-400/40 flex items-center justify-center shadow-glow-gold hover:scale-105 transition-transform">
+              {user.profilePic ? (
+                <img src={user.profilePic} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-gold-400 font-bold text-sm">
+                  {user.name?.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </Link>
 
             
           </div>

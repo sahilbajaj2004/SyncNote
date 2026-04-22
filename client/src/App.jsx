@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Landing from "./pages/Landing";
 import AuthCallback from "./pages/AuthCallback";
 import SetupUsername from "./pages/SetupUsername";
+import Settings from "./pages/Settings";
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -42,6 +43,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <NoteEditor />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />
