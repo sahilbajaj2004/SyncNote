@@ -22,6 +22,17 @@ const noteSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    shareToken: {
+      type: String,
+      default: null,
+      index: true,
+      unique: true,
+      sparse: true,
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

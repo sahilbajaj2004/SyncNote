@@ -417,6 +417,62 @@
     border-radius: 50%;
     animation: spin-slow 1s linear infinite;
   }
+
+  /* ── Share Modal ── */
+  .share-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fade-in 0.2s ease both;
+    padding: 1rem;
+  }
+
+  .share-modal {
+    width: 100%;
+    max-width: 460px;
+    padding: 1.75rem;
+  }
+
+  /* Share toggle switch */
+  .share-toggle {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-default);
+    cursor: pointer;
+    transition: all 0.35s var(--ease-out-expo);
+    flex-shrink: 0;
+  }
+
+  .share-toggle-on {
+    background: linear-gradient(135deg, var(--gold-500), var(--gold-600));
+    border-color: var(--gold-500);
+    box-shadow: 0 0 16px rgba(251, 191, 36, 0.2);
+  }
+
+  .share-toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.35s var(--ease-spring);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  .share-toggle-on .share-toggle-knob {
+    transform: translateX(22px);
+  }
 }
 
 /* ── ProseMirror / TipTap Overrides ── */

@@ -47,6 +47,13 @@ const NoteEditor = () => {
     };
   });
 
+  // Share state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareToken, setShareToken] = useState(null);
+  const [isPublic, setIsPublic] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     localStorage.setItem("syncnote_doc_settings", JSON.stringify(docSettings));
   }, [docSettings]);
@@ -77,6 +84,8 @@ const NoteEditor = () => {
         const res = await axios.get(`/notes/${id}`);
         setNote(res.data);
         setTitle(res.data.title);
+        setShareToken(res.data.shareToken || null);
+        setIsPublic(res.data.isPublic || false);
         if (editor && res.data.content && !initialized.current) {
           editor.commands.setContent(res.data.content);
           initialized.current = true;
@@ -167,6 +176,57 @@ const NoteEditor = () => {
     }
   };
 
+  // ── Share helpers ──
+  const isOwner = note && user && note.owner?._id === user.id;
+
+  const generateShareLink = async () => {
+    setShareLoading(true);
+    try {
+      const res = await axios.post(`/notes/${id}/share`);
+      setShareToken(res.data.shareToken);
+      setIsPublic(true);
+    } catch (err) {
+      console.error("Failed to generate share link:", err);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const revokeShareLink = async () => {
+    setShareLoading(true);
+    try {
+      await axios.delete(`/notes/${id}/share`);
+      setShareToken(null);
+      setIsPublic(false);
+    } catch (err) {
+      console.error("Failed to revoke share link:", err);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const shareUrl = shareToken
+    ? `${window.location.origin}/shared/${shareToken}`
+    : "";
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+      const ta = document.createElement("textarea");
+      ta.value = shareUrl;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-73px)] relative flex items-center justify-center">
@@ -239,6 +299,29 @@ const NoteEditor = () => {
                 ))}
               </div>
             )}
+
+            {/* Share Button (owner only) */}
+            {isOwner && (
+              <button
+                onClick={() => setShowShareModal(true)}
+                className={`h-8 px-3 rounded-md flex items-center justify-center gap-1.5 text-sm font-medium transition-all border ${
+                  isPublic
+                    ? "bg-gold-500/20 text-gold-400 border-gold-500/30 shadow-glow-gold"
+                    : "text-gray-400 hover:bg-white/10 hover:text-white border-transparent"
+                }`}
+                title="Share this note"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                Share
+              </button>
+            )}
+
             <div className="h-4 w-px bg-white/10 mx-1"></div>
             <div className="flex items-center gap-2 text-sm text-gray-400 font-medium w-24 justify-end">
               {saving ? (
@@ -496,6 +579,108 @@ const NoteEditor = () => {
         </div>
 
       </div>
+
+      {/* ── Share Modal ── */}
+      {showShareModal && (
+        <div className="share-modal-overlay" onClick={() => setShowShareModal(false)}>
+          <div className="glass-card share-modal anim-in" onClick={(e) => e.stopPropagation()}>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold-400)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-white font-heading font-bold text-base">Share Note</h3>
+                  <p className="text-gray-500 text-xs">Generate a public link anyone can use</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div className="h-px w-full bg-gradient-to-r from-white/10 via-white/5 to-transparent mb-6"></div>
+
+            {/* Toggle */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-white text-sm font-medium">Public Link</p>
+                <p className="text-gray-500 text-xs mt-0.5">Anyone with the link can view & edit</p>
+              </div>
+              <button
+                onClick={isPublic ? revokeShareLink : generateShareLink}
+                disabled={shareLoading}
+                className={`share-toggle ${isPublic ? 'share-toggle-on' : ''}`}
+              >
+                <span className="share-toggle-knob"></span>
+              </button>
+            </div>
+
+            {/* Link Display */}
+            {isPublic && shareToken && (
+              <div className="anim-in">
+                <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-4">
+                  <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wider">Shareable Link</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-black/30 rounded-lg px-3 py-2.5 text-sm text-gold-400 font-mono overflow-hidden">
+                      <span className="block truncate">{shareUrl}</span>
+                    </div>
+                    <button
+                      onClick={copyLink}
+                      className={`shrink-0 h-10 px-4 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
+                        copied
+                          ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                          : "btn-gold"
+                      }`}
+                    >
+                      {copied ? (
+                        <>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                          Copy
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 px-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold-500)" strokeWidth="2" className="mt-0.5 shrink-0" opacity="0.6"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  <p className="text-gray-500 text-xs leading-relaxed">
+                    Anyone with this link can open and edit this note without signing in. Revoke the link at any time to make it private again.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!isPublic && (
+              <div className="bg-white/5 border border-white/5 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-500 mb-3">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </div>
+                <p className="text-gray-400 text-sm font-medium">This note is private</p>
+                <p className="text-gray-600 text-xs mt-1">Toggle the switch above to generate a shareable link.</p>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

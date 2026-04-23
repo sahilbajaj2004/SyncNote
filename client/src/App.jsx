@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import AuthCallback from "./pages/AuthCallback";
 import SetupUsername from "./pages/SetupUsername";
 import Settings from "./pages/Settings";
+import SharedNote from "./pages/SharedNote";
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -23,38 +24,48 @@ const PublicRoute = ({ children }) => {
 const App = () => {
   return (
     <BrowserRouter>
-      <Navbar />
       <Routes>
-        <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/setup-username" element={<SetupUsername />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/notes/:id"
-          element={
-            <ProtectedRoute>
-              <NoteEditor />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/register" />} />
+        {/* Shared note — no Navbar, no auth */}
+        <Route path="/shared/:token" element={<SharedNote />} />
+
+        {/* All other routes get the Navbar */}
+        <Route path="*" element={
+          <>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
+              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/setup-username" element={<SetupUsername />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notes/:id"
+                element={
+                  <ProtectedRoute>
+                    <NoteEditor />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/register" />} />
+            </Routes>
+          </>
+        } />
       </Routes>
     </BrowserRouter>
   );
