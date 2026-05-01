@@ -128,7 +128,7 @@ router.post("/setup-username", async (req, res) => {
     const user = await User.findByIdAndUpdate(
       decoded.userId,
       { username: username.toLowerCase() },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     res.json({
