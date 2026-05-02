@@ -15,7 +15,11 @@ const AuthCallback = () => {
       try {
         const parsedUser = JSON.parse(decodeURIComponent(user));
         login(parsedUser, token);
-        navigate("/setup-username", { replace: true });
+        if (parsedUser?.username) {
+          navigate("/dashboard", { replace: true });
+        } else {
+          navigate("/setup-username", { replace: true });
+        }
       } catch (err) {
         navigate("/login");
       }

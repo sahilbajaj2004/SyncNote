@@ -1,13 +1,55 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Skeleton } from "boneyard-js/react";
 import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+
+const DashboardSkeleton = () => (
+  <div className="min-h-[calc(100vh-73px)] relative px-6 py-12">
+    <div className="mesh-bg opacity-30"></div>
+    <div className="grain-overlay"></div>
+
+    <div className="max-w-5xl mx-auto relative z-10">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
+        <div className="space-y-3">
+          <div className="skeleton h-9 w-48"></div>
+          <div className="skeleton h-4 w-40"></div>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="skeleton h-11 w-full sm:w-72"></div>
+          <div className="skeleton h-11 w-32"></div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div key={idx} className="glass-card p-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="skeleton h-5 w-36"></div>
+              <div className="skeleton h-6 w-6"></div>
+            </div>
+            <div className="space-y-2 mb-6">
+              <div className="skeleton h-3 w-full"></div>
+              <div className="skeleton h-3 w-11/12"></div>
+              <div className="skeleton h-3 w-9/12"></div>
+            </div>
+            <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between">
+              <div className="skeleton h-3 w-20"></div>
+              <div className="skeleton h-5 w-10"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const Dashboard = () => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -61,26 +103,23 @@ const Dashboard = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[calc(100vh-73px)] relative flex items-center justify-center">
-        <div className="mesh-bg opacity-30"></div>
-        <div className="grain-overlay"></div>
-        <div className="flex flex-col items-center gap-5 anim-fade z-10">
-          <div className="branded-loader"></div>
-          <p className="text-gray-500 font-medium">Loading your workspace</p>
-        </div>
-      </div>
-    );
-  }
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredNotes = normalizedQuery
+    ? notes.filter((note) => {
+        const title = note.title?.toLowerCase() || "";
+        const content =
+          note.content?.replace(/<[^>]*>?/gm, "").toLowerCase() || "";
+        return title.includes(normalizedQuery) || content.includes(normalizedQuery);
+      })
+    : notes;
 
-  return (
+  const dashboardContent = (
     <div className="min-h-[calc(100vh-73px)] relative px-6 py-12">
       <div className="mesh-bg opacity-40"></div>
       <div className="grain-overlay"></div>
 
       <div className="max-w-5xl mx-auto relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 anim-in anim-in-1">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12 anim-in anim-in-1">
           <div>
             <h1 className="text-4xl font-heading font-bold text-white tracking-tight">
               Workspace
@@ -89,26 +128,46 @@ const Dashboard = () => {
               <span className="flex h-2 w-2 rounded-full bg-gold-400"></span>
               <p className="text-gray-400 text-sm font-medium">
                 {notes.length} {notes.length === 1 ? "document" : "documents"}
+                {normalizedQuery && (
+                  <span className="text-gray-500"> • {filteredNotes.length} matches</span>
+                )}
               </p>
             </div>
           </div>
-          <button
-            onClick={createNote}
-            disabled={creating}
-            className="btn-gold px-6 py-2.5 flex items-center gap-2"
-          >
-            {creating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-void/20 border-t-void rounded-full animate-spin"></div>
-                Creating...
-              </>
-            ) : (
-              <>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                New Note
-              </>
-            )}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search notes"
+                className="input-gold w-full sm:w-72 px-4 py-2.5 pr-10"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </span>
+            </div>
+            <button
+              onClick={createNote}
+              disabled={creating}
+              className="btn-gold px-6 py-2.5 flex items-center gap-2"
+            >
+              {creating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-void/20 border-t-void rounded-full animate-spin"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  New Note
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -131,9 +190,25 @@ const Dashboard = () => {
                Create your first note
             </button>
           </div>
+        ) : filteredNotes.length === 0 ? (
+          <div className="glass-card flex flex-col items-center justify-center py-20 px-4 text-center anim-in anim-in-2 mt-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold-500/20 to-gold-600/5 border border-gold-500/20 flex items-center justify-center mb-6">
+              <svg className="text-gold-400" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <h3 className="text-xl font-heading font-bold text-white mb-2">No matches</h3>
+            <p className="text-gray-400 max-w-sm mb-6">
+              Try a different keyword or clear your search.
+            </p>
+            <button
+              onClick={() => setSearchQuery("")}
+              className="btn-glass px-5 py-2.5 flex items-center gap-2 text-sm text-gold-400 hover:text-gold-300"
+            >
+              Clear search
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {notes.map((note, idx) => (
+            {filteredNotes.map((note, idx) => (
               <div
                 key={note._id}
                 onClick={() => navigate(`/notes/${note._id}`)}
@@ -175,6 +250,12 @@ const Dashboard = () => {
         )}
       </div>
     </div>
+  );
+
+  return (
+    <Skeleton name="dashboard" loading={loading} fixture={<DashboardSkeleton />}>
+      {dashboardContent}
+    </Skeleton>
   );
 };
 
